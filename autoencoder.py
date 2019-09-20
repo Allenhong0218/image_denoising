@@ -6,6 +6,8 @@ Created on Mon Sep 16 10:01:34 2019
 """
 
 # -*- coding:utf-8 -*-
+#尝试实现能够去除不同类型的噪声的降噪自编码网络
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras import datasets
@@ -36,24 +38,24 @@ def add_noise(x_train,x_test):
 def remove_noisy_model(x_train_noisy,x_test_noisy):
     """去燥"""
     input_img = Input(shape=(28, 28, 1,)) # N * 28 * 28 * 1
-    # 实现 encoder 部分，由两个 3 × 3 × 32 的卷积和两个 2 × 2 的最大池化组 成。
-    x = Conv2D(32, (3, 3), padding='same', activation='relu')(input_img) # 28 * 28 * 32
-    x = MaxPooling2D((2, 2), padding='same')(x) # 14 * 14 * 32
-    x = Conv2D(32, (3, 3), padding='same', activation='relu')(x) # 14 * 14 * 32
-    encoded = MaxPooling2D((2, 2), padding='same')(x) # 7 * 7 * 32
+    # 实现 encoder 部分，由两个 3 × 3 × 8 的卷积和两个 2 × 2 的最大池化组 成。
+    x = Conv2D(8, (3, 3), padding='same', activation='relu')(input_img) # 28 * 28 * 8
+    x = MaxPooling2D((2, 2), padding='same')(x) # 14 * 14 * 8
+    x = Conv2D(8, (3, 3), padding='same', activation='relu')(x) # 14 * 14 * 8
+    encoded = MaxPooling2D((2, 2), padding='same')(x) # 7 * 7 * 8
     # 实现 decoder 部分，由两个 3 × 3 × 32 的卷积和两个 2 × 2 的上采样组成。
     # 7 * 7 * 32
-    x = Conv2D(32, (3, 3), padding='same', activation='relu')(encoded) # 7 * 7 * 32
-    x = UpSampling2D((2, 2))(x) # 14 * 14 * 32
-    x = Conv2D(32, (3, 3), padding='same', activation='relu')(x) # 14 * 14 * 32
-    x = UpSampling2D((2, 2))(x) # 28 * 28 * 32
-    decoded = Conv2D(1, (3, 3), padding='same', activation='sigmoid')(x) # 28 * 28 *
+    x = Conv2D(8, (3, 3), padding='same', activation='relu')(encoded) # 7 * 7 * 8
+    x = UpSampling2D((2, 2))(x) # 14 * 14 * 4
+    x = Conv2D(8, (3, 3), padding='same', activation='relu')(x) # 14 * 14 * 8
+    x = UpSampling2D((2, 2))(x) # 28 * 28 * 8
+    decoded = Conv2D(1, (3, 3), padding='same', activation='sigmoid')(x) # 28 * 28 *1
  
     autoencoder = Model(input_img, decoded)
     autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
  
     autoencoder.fit(x_train_noisy, x_train,
-                    epochs=100,
+                    epochs=30,
                     batch_size=128,
                     shuffle=True,
                     validation_data=(x_test_noisy, x_test))
@@ -100,6 +102,7 @@ def plot2(x_test_noisy,decoded_imgs):
  
 x_train,x_test =get_data()
 x_train_noisy, x_test_noisy = add_noise(x_train,x_test)
-remove_noisy_model(x_train_noisy,x_test_noisy)
+#remove_noisy_model(x_train_noisy,x_test_noisy)
 decoded_imgs = remove_noisy(x_test_noisy)
 plot2(x_test_noisy,decoded_imgs)
+
